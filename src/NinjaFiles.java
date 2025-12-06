@@ -1,11 +1,7 @@
 
-
 import java.util.Scanner;
 
-/**
- * Main entry point for the NinjaFiles application.
- * Handles user input and command parsing.
- */
+// The main brain where we run the show. It reads what the user types and tells the FileSystem what to do.
 public class NinjaFiles {
 
     public static void main(String[] args) {
@@ -14,8 +10,8 @@ public class NinjaFiles {
         
         System.out.println("Welcome to NinjaFiles! Type 'exit' to quit.");
 
+        // Keeps asking for commands until the user says 'exit'
         while (true) {
-            // Print prompt
             System.out.print(fs.getCurrentPath() + "$ ");
             
             if (!scanner.hasNextLine()) {
@@ -27,7 +23,7 @@ public class NinjaFiles {
                 continue;
             }
 
-            // Simple command parsing
+            // Chop up the user's input to figure out what they want
             String[] parts = line.split("\\s+");
             String command = parts[0];
 
@@ -37,6 +33,7 @@ public class NinjaFiles {
 
             switch (command) {
                 case "mkdir":
+                    // Handles the 'mkdir' command, including the '-p' flag if they want nested folders
                     boolean makeParents = false;
                     int startIndex = 1;
                     if (parts.length > 1 && parts[1].equals("-p")) {
@@ -52,6 +49,7 @@ public class NinjaFiles {
                     }
                     break;
                 case "touch":
+                    // Makes sure the used sends the size along with the name
                     if (parts.length == 3) {
                         try {
                             int size = Integer.parseInt(parts[2]);
@@ -64,7 +62,7 @@ public class NinjaFiles {
                     }
                     break;
                 case "echo":
-                    // Parse: echo "text" > path
+                    // Reads the text inside quotes and writes it to the file path
                     int firstQuote = line.indexOf('"');
                     int lastQuote = line.lastIndexOf('"');
                     int greaterThan = line.lastIndexOf('>');
@@ -106,7 +104,7 @@ public class NinjaFiles {
                     fs.tree();
                     break;
                 case "grep":
-                    // Parse: grep "pattern" filename
+                    // Parses the search pattern and the filename from the input
                     int firstQuoteGrep = line.indexOf('"');
                     int lastQuoteGrep = line.lastIndexOf('"');
                     

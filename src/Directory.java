@@ -1,65 +1,45 @@
 
-
 import java.util.HashMap;
 import java.util.Collection;
 
-/**
- * Represents a directory in the file system.
- * Uses a HashMap to store children nodes for efficient lookup.
- */
+// Basically a folder that can hold other files or folders inside it
 public class Directory extends Node {
-    // The hash table required by the project spec to store children.
-    // Key: child name (String), Value: Node object.
+    // We use a HashMap here to quickly find items by their name
     private HashMap<String, Node> children;
 
+    // Sets up an empty folder ready to be filled
     public Directory(String name, Directory parent) {
         super(name, parent);
         this.children = new HashMap<>();
     }
 
+    // Yup, this is definitely a folder
     @Override
     public boolean isDirectory() {
         return true;
     }
 
-    /**
-     * Retrieves a child node by name.
-     * @param name The name of the child to retrieve.
-     * @return The child Node, or null if not found.
-     */
+    // Looks for a specific file or folder inside this one
     public Node getChild(String name) {
         return children.get(name);
     }
 
-    /**
-     * Adds a child node to this directory.
-     * @param child The node to add.
-     */
+    // Puts a new item into this folder
     public void addChild(Node child) {
         children.put(child.getName(), child);
     }
 
-    /**
-     * Removes a child node by name.
-     * @param name The name of the child to remove.
-     * @return The removed Node, or null if not found.
-     */
+    // Takes an item out of this folder
     public Node removeChild(String name) {
         return children.remove(name);
     }
 
-    /**
-     * Returns a collection of all children nodes.
-     * @return Collection of children.
-     */
+    // Gives us a list of everything inside
     public Collection<Node> getChildren() {
         return children.values();
     }
 
-    /**
-     * Calculates the total size of the directory by summing the sizes of all children.
-     * Recursive implementation.
-     */
+    // To find the size, we have to add up the sizes of everything inside recursively
     @Override
     public int getSize() {
         int totalSize = 0;

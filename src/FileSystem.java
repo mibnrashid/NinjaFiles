@@ -4,25 +4,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Core class for the NinjaFiles file system simulator.
- * Manages the root directory and the current working directory.
- */
+// This is the brain of our operation. It holds the whole file tree and knows where we are currently standing.
 public class FileSystem {
     private Directory root;
     private Directory current;
 
+    // Starts everything off with a root folder and puts us there
     public FileSystem() {
-        // Initialize root directory with no parent
         this.root = new Directory("/", null);
-        // Start at root
         this.current = root;
     }
 
-    /**
-     * Builds the absolute path of the current directory.
-     * @return String representation of the current path (e.g., "/home/user")
-     */
+    // Figures out the full path string like '/home/user' from where we are right now
     public String getCurrentPath() {
         if (current == root) {
             return "/";
@@ -37,10 +30,7 @@ public class FileSystem {
         return path.toString();
     }
 
-    /**
-     * Helper to resolve a path to a Node.
-     * Handles absolute paths, relative paths, ".", and "..".
-     */
+    // The workhorse for navigation. Takes a path string and finds the actual node it points to.
     private Node resolveNode(String path) {
         if (path == null || path.isEmpty()) return current;
         
@@ -61,17 +51,13 @@ public class FileSystem {
                 if (child == null) return null;
                 temp = child;
             } else {
-                // Cannot traverse through a file
                 return null;
             }
         }
         return temp;
     }
 
-    /**
-     * Helper to resolve a path to a Directory.
-     * Returns null if path doesn't exist or is not a directory.
-     */
+    // Like resolveNode, but makes sure we end up at a folder, not a file
     private Directory resolveDirectory(String path) {
         Node node = resolveNode(path);
         if (node instanceof Directory) {
@@ -80,11 +66,7 @@ public class FileSystem {
         return null;
     }
 
-    /**
-     * Helper to get the parent directory of a path and the filename.
-     * Returns an array where [0] is the parent Directory and [1] is the name.
-     * Returns null if parent path is invalid.
-     */
+    // Splits a path into 'the folder it's in' and 'the name of the file/folder itself'
     private Object[] resolveParentAndName(String path) {
         String parentPath;
         String name;
@@ -93,7 +75,6 @@ public class FileSystem {
         if (lastSlash == -1) {
             return new Object[]{current, path};
         } else if (lastSlash == 0) {
-            // Path is like "/name"
             return new Object[]{root, path.substring(1)};
         } else {
             parentPath = path.substring(0, lastSlash);
@@ -103,9 +84,9 @@ public class FileSystem {
         }
     }
 
+    // Creates a new folder. Can handle nested paths if you tell it to.
     public void mkdir(String path, boolean makeParents) {
         if (makeParents) {
-            // mkdir -p behavior
             String[] parts = path.split("/");
             Node temp = path.startsWith("/") ? root : current;
             
@@ -120,7 +101,6 @@ public class FileSystem {
                     Directory dir = (Directory) temp;
                     Node child = dir.getChild(part);
                     if (child == null) {
-                        // Create directory
                         Directory newDir = new Directory(part, dir);
                         dir.addChild(newDir);
                         temp = newDir;
@@ -136,19 +116,6 @@ public class FileSystem {
                 }
             }
         } else {
-            // Normal mkdir behavior (in current directory)
-            // The spec says "create each named directory directly inside the current directory"
-            // But if the user passes a path like "a/b", standard mkdir fails without -p.
-            // However, the prompt says "mkdir home" (name) or "mkdir -p a/b/c" (path).
-            // I will assume without -p, we only support names in current dir, OR strict path checking.
-            // "create each named directory directly inside the current directory" suggests names only.
-            // But let's support paths if they are direct children or valid? 
-            // Actually, standard mkdir fails if parent doesn't exist.
-            // Let's stick to creating in 'current' if it's just a name, or resolve parent if it's a path?
-            // "create each named directory directly inside the current directory" -> implies arguments are names.
-            // But if I do `mkdir a/b` without -p, it usually fails if a doesn't exist.
-            // I will implement: resolve parent, try to create child.
-            
             Object[] result = resolveParentAndName(path);
             if (result == null || result[0] == null) {
                 System.out.println("Error: Path not found.");
@@ -165,11 +132,8 @@ public class FileSystem {
         }
     }
 
+    // Creates an empty file with a specific size
     public void touch(String name, int size) {
-        // touch creates in current directory usually, unless path provided?
-        // Prompt says "Create a new empty file ... in the current directory".
-        // So we assume 'name' is just a name, not a path.
-        
         Node existing = current.getChild(name);
         if (existing != null) {
             if (existing instanceof Directory) {
@@ -184,14 +148,10 @@ public class FileSystem {
         }
     }
 
+    // Writes text into a file, creating it if it doesn't exist
     public void echo(String content, String path) {
         Object[] result = resolveParentAndName(path);
         if (result == null || result[0] == null) {
-            // If parent doesn't exist, we can't create the file (unless we imply -p, but spec says "assume needed directories already exist")
-            // Wait, "assume needed directories already exist" means we don't need to create them.
-            // But if they DON'T exist, we should probably fail or just error.
-            // "If file does not exist, create it (assume needed directories already exist)."
-            // This implies we just resolve parent.
             System.out.println("Error: Path not found.");
             return;
         }
@@ -212,9 +172,9 @@ public class FileSystem {
         }
     }
 
+    // Lists everything in the current folder, sorting them alphabetically
     public void ls() {
         List<Node> children = new ArrayList<>(current.getChildren());
-        // Sort by name for consistent output
         Collections.sort(children, (n1, n2) -> n1.getName().compareTo(n2.getName()));
         
         StringBuilder sb = new StringBuilder();
@@ -230,6 +190,7 @@ public class FileSystem {
         }
     }
 
+    // Changes our current location to somewhere else
     public void cd(String path) {
         Node node = resolveNode(path);
         if (node == null) {
@@ -241,10 +202,12 @@ public class FileSystem {
         }
     }
 
+    // Prints out where we currently are
     public void pwd() {
         System.out.println(getCurrentPath());
     }
 
+    // Deletes a file or an empty folder
     public void rm(String name) {
         Node child = current.getChild(name);
         if (child == null) {
@@ -253,10 +216,7 @@ public class FileSystem {
         }
         
         if (child instanceof Directory) {
-            if (child.getSize() > 0) { // Directory size is sum of children, if > 0 it might have children? 
-                // Wait, empty directory size is 0. 
-                // But what if it contains empty files? Size is 0.
-                // Better to check if children collection is empty.
+            if (child.getSize() > 0) { 
                 if (!((Directory) child).getChildren().isEmpty()) {
                     System.out.println("Error: Cannot remove directory '" + name + "'. It is not empty.");
                     return;
@@ -266,6 +226,7 @@ public class FileSystem {
         current.removeChild(name);
     }
 
+    // Deletes a folder and everything inside it
     public void rmRecursive(String name) {
         Node child = current.getChild(name);
         if (child == null) {
@@ -279,8 +240,8 @@ public class FileSystem {
         current.removeChild(name);
     }
 
+    // Helper that actually goes down the tree and deletes things bottom-up
     private void removeRecursiveHelper(Directory dir) {
-        // Create a copy to avoid concurrent modification
         List<Node> children = new ArrayList<>(dir.getChildren());
         for (Node child : children) {
             if (child instanceof Directory) {
@@ -290,24 +251,15 @@ public class FileSystem {
         }
     }
 
-    /**
-     * Implements the 'tree' command.
-     * Recursively displays the directory structure.
-     * Uses the hash-table children from Directory to traverse the tree.
-     */
+    // Shows a pretty visual hierarchy of the current folder and its subfolders
     public void tree() {
         System.out.println(".");
         printTree(current, "");
     }
 
-    /**
-     * Recursive helper for tree.
-     * @param dir The directory to print.
-     * @param prefix The string prefix for indentation and tree branches.
-     */
+    // The recursive part that draws the tree structure
     private void printTree(Directory dir, String prefix) {
         List<Node> children = new ArrayList<>(dir.getChildren());
-        // Sort children by name for consistent output
         Collections.sort(children, (n1, n2) -> n1.getName().compareTo(n2.getName()));
 
         for (int i = 0; i < children.size(); i++) {
@@ -326,12 +278,8 @@ public class FileSystem {
         }
     }
 
-    /**
-     * Implements the 'grep' command using the KMP algorithm.
-     * Searches for a pattern in a file's content.
-     */
+    // Searches for a text pattern inside a file
     public void grep(String pattern, String filename) {
-        // Resolve the file path (filename can be a path)
         Object[] result = resolveParentAndName(filename);
         if (result == null || result[0] == null) {
             System.out.println("Error: Path not found.");
@@ -355,7 +303,6 @@ public class FileSystem {
         File file = (File) node;
         String content = file.getContent();
         
-        // KMP Search
         if (kmpSearch(content, pattern)) {
             System.out.println("Pattern \"" + pattern + "\" found in " + name + ".");
         } else {
@@ -363,17 +310,13 @@ public class FileSystem {
         }
     }
 
-    /**
-     * KMP Search Algorithm.
-     * Checks if pattern exists in text.
-     * Time Complexity: O(N + M) where N is text length, M is pattern length.
-     */
+    // Standard KMP algorithm to find the text pattern efficiently
     private boolean kmpSearch(String text, String pattern) {
         if (pattern.isEmpty()) return true;
         
         int[] lps = buildLPS(pattern);
-        int i = 0; // index for text
-        int j = 0; // index for pattern
+        int i = 0; 
+        int j = 0; 
         int n = text.length();
         int m = pattern.length();
         
@@ -383,7 +326,7 @@ public class FileSystem {
                 i++;
             }
             if (j == m) {
-                return true; // Pattern found
+                return true; 
             } else if (i < n && pattern.charAt(j) != text.charAt(i)) {
                 if (j != 0) {
                     j = lps[j - 1];
@@ -395,17 +338,13 @@ public class FileSystem {
         return false;
     }
 
-    /**
-     * Builds the Longest Prefix Suffix (LPS) array for KMP.
-     * lps[i] stores the length of the longest proper prefix of pattern[0..i]
-     * that is also a suffix of pattern[0..i].
-     */
+    // Pre-processes the pattern for KMP search
     private int[] buildLPS(String pattern) {
         int m = pattern.length();
         int[] lps = new int[m];
-        int len = 0; // length of the previous longest prefix suffix
+        int len = 0; 
         int i = 1;
-        lps[0] = 0; // lps[0] is always 0
+        lps[0] = 0; 
         
         while (i < m) {
             if (pattern.charAt(i) == pattern.charAt(len)) {
@@ -424,12 +363,8 @@ public class FileSystem {
         return lps;
     }
 
-    /**
-     * Implements the 'du' command.
-     * Calculates the total size of the current directory recursively.
-     */
+    // Calculates how much space the current folder takes up
     public void du() {
-        // Directory.getSize() is already recursive, summing children sizes.
         int totalSize = current.getSize();
         System.out.println("Total size: " + totalSize + "B");
     }

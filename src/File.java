@@ -1,25 +1,17 @@
 
-
-/**
- * Represents a file in the file system.
- * Stores content and size.
- */
+// Just a standard file that holds some text and knows how big it is
 public class File extends Node {
     private int size;
     private String content;
 
-    /**
-     * Constructor that initializes size, with empty content.
-     */
+    // Creates a blank file with a specific size placeholder
     public File(String name, Directory parent, int size) {
         super(name, parent);
         this.size = size;
         this.content = "";
     }
 
-    /**
-     * Constructor that initializes content, size is derived from content length.
-     */
+    // Creates a file with actual text in it
     public File(String name, Directory parent, String content) {
         super(name, parent);
         this.content = content;
