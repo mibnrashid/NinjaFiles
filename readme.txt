@@ -32,3 +32,4 @@ Once the application is running, you can use the following commands:
 - grep "<pattern>" <filename>: Search for a text pattern in a file.
 - du: Display the total disk usage of the current directory.
 - exit: Exit the application.
+- help: Show all available commands.

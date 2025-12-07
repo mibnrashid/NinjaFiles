@@ -129,6 +129,21 @@ public class NinjaFiles {
                 case "du":
                     fs.du();
                     break;
+                case "help":
+                    System.out.println("Available commands:");
+                    System.out.println("  mkdir [-p] <dirs>      : Create directories");
+                    System.out.println("  touch <name> <size>    : Create a file with size");
+                    System.out.println("  echo \"<text>\" > <file> : Write text to a file");
+                    System.out.println("  ls                     : List contents");
+                    System.out.println("  cd <path>              : Change directory");
+                    System.out.println("  pwd                    : Print working directory");
+                    System.out.println("  rm [-r] <name>         : Remove file or directory");
+                    System.out.println("  tree                   : Show file structure");
+                    System.out.println("  grep \"<pat>\" <file>    : Search in file");
+                    System.out.println("  du                     : Disk usage");
+                    System.out.println("  help                   : Show this help message");
+                    System.out.println("  exit                   : Exit");
+                    break;
                 default:
                     System.out.println("Unknown command: " + command);
             }
